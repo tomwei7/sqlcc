@@ -48,10 +48,11 @@ protected:
     Driver driver;
 };
 
-//TEST_F(MySQLDriverTest, Connection) {
-//    Conn conn = driver.open("root:toor@tcp(127.0.0.1:3306)/");
-//    std::this_thread::sleep_for(std::chrono::seconds(10));
-//}
+TEST_F(MySQLDriverTest, Exec) {
+    Conn conn = driver.open("root:toor@tcp(127.0.0.1:3306)/testdb");
+    Stmt stmt = conn->prepare("insert into table1 (username, age) values(?, ?)");
+    Result result = stmt->exec({"test", 12});
+}
 
 } // namespace mysql
 } // namespace driver

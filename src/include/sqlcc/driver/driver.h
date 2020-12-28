@@ -15,7 +15,7 @@ class Transaction;
 class SQLResult;
 class SQLRows;
 
-using Value = std::variant<int64_t, double, bool, std::string, std::tm>;
+using Value = std::variant<int64_t, double, std::string>;
 
 using Conn = std::unique_ptr<Connection>;
 using Stmt = std::unique_ptr<Statement>;
@@ -23,12 +23,23 @@ using Tx = std::unique_ptr<Transaction>;
 using Result = std::unique_ptr<SQLResult>;
 using Rows = std::unique_ptr<SQLRows>;
 
+class SQLResult {
+public:
+    virtual ~SQLResult() {};
+    virtual int64_t last_insert_id() = 0;
+    virtual int64_t rows_affected() = 0;
+};
+
+class SQLRows {
+public:
+};
+
 class Statement {
 public:
-    virtual void close();
-    virtual std::size_t num_input();
-    virtual Result exec(const std::vector<Value>& args);
-    virtual Rows query(const std::vector<Value>& args);
+    virtual ~Statement() {};
+    virtual std::size_t num_input() = 0;
+    virtual Result exec(const std::vector<Value>& args) = 0;
+    virtual Rows query(const std::vector<Value>& args) = 0;
 };
 
 class Transaction {

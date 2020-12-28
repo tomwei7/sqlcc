@@ -1,5 +1,7 @@
 #include "driver/mysql/conn.h"
 
+#include "driver/mysql/stmt.h"
+
 #include <stdexcept>
 
 namespace sqlcc {
@@ -46,7 +48,7 @@ Connection::Connection(const Config& cfg): cfg_(cfg) {
 }
 
 Stmt Connection::prepare(const std::string& query) {
-    return nullptr;
+    return std::make_unique<Statement>(this, query);
 }
 
 Tx Connection::begin() {

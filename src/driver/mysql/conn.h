@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "sqlcc/driver/driver.h"
 #include "driver/mysql/dsn.h"
 
@@ -19,6 +18,7 @@ public:
     void enter_thread() override;
     void leave_thread() override;
 private:
+    friend class Statement;
     Config cfg_;
     MYSQL mysql_;
 };

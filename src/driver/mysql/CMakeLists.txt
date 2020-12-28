@@ -3,6 +3,7 @@ add_library(mysqldriver
     dsn.cc
     driver.cc
     conn.cc
+    stmt.cc
 )
 
 target_include_directories(mysqldriver
