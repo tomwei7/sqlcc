@@ -16,19 +16,12 @@ public:
     Result exec(const std::vector<Value>& args) override;
     Rows query(const std::vector<Value>& args) override;
 private:
+    void bind_value(const std::vector<Value>& args);
     Connection* conn_;
     std::string query_;
     MYSQL_STMT* stmt_;
-};
-
-class SQLResult: public driver::SQLResult {
-public:
-    SQLResult(int64_t last_insert_id, int64_t rows_affected);
-    int64_t last_insert_id() override;
-    int64_t rows_affected() override;
-private:
-    int64_t last_insert_id_;
-    int64_t rows_affected_;
+    MYSQL_BIND* bind_;
+    std::size_t bind_size_;
 };
 
 } // namespace mysql

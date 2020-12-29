@@ -2,6 +2,8 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
+#include <ctime>
+#include <iostream>
 
 #include "driver/mysql/driver.h"
 #include "driver/mysql/dsn.h"
@@ -49,9 +51,27 @@ protected:
 };
 
 TEST_F(MySQLDriverTest, Exec) {
+    //std::time_t t = std::time(nullptr);
+    //std::tm tm = *std::localtime(&t);
+    //Conn conn = driver.open("root:toor@tcp(127.0.0.1:3306)/testdb");
+    //Stmt stmt = conn->prepare("insert into table1 (username, age, ctime, ok) values(?, ?, ?, ?)");
+    //Result result = stmt->exec({"test", 12, tm, 1});
+}
+
+TEST_F(MySQLDriverTest, Query) {
     Conn conn = driver.open("root:toor@tcp(127.0.0.1:3306)/testdb");
-    Stmt stmt = conn->prepare("insert into table1 (username, age) values(?, ?)");
-    Result result = stmt->exec({"test", 12});
+    Stmt stmt = conn->prepare("select * from table1");
+    Rows rows = stmt->query({});
+    std::vector<std::string> columns = rows->columns();
+    while(rows->next()) {
+        std::vector<Value> values(columns.size());
+        rows->scan(values);
+        std::cerr << "id: " << std::get<int64_t>(values[0]) << std::endl;
+        std::cerr << "username: " << std::get<std::string>(values[1]) << std::endl;
+        std::cerr << "age: " << std::get<int64_t>(values[2]) << std::endl;
+        std::cerr << "ctime: " << std::get<std::string>(values[3]) << std::endl;
+        std::cerr << "ok: " << std::get<int64_t>(values[4]) << std::endl;
+    }
 }
 
 } // namespace mysql

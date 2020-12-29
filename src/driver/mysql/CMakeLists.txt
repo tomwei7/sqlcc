@@ -1,5 +1,6 @@
 add_library(mysqldriver
     STATIC
+    exception.cc
     dsn.cc
     driver.cc
     conn.cc
