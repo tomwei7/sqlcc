@@ -76,3 +76,24 @@ bool unregister_driver(const std::string &name);
 
 } // namespace driver
 } // namespace sqlcc
+
+inline std::ostream& operator<<(std::ostream& os, const sqlcc::driver::Value& value) {
+    std::visit([&os](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::tm>) os << std::put_time(&arg, "%FT%T%z");
+        else os << arg;
+    }, value);
+    return os;
+}
+
+inline std::ostream &
+operator<<(std::ostream &os, const std::vector<sqlcc::driver::Value> &values) {
+  os << '[';
+  for (std::size_t i = 0; i < values.size(); i++) {
+    os << values[i];
+    if (i < values.size() - 1)
+      os << ", ";
+  }
+  os << ']';
+  return os;
+}

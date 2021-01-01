@@ -32,4 +32,11 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include")
 endif()
 
+add_executable(sqlcc_test sqlcc_test.cc)
+
+target_link_libraries(sqlcc_test 
+    PRIVATE gtest_main
+)
+add_test(NAME sqlcc_test COMMAND sqlcc_test)
+
 add_subdirectory(driver)
