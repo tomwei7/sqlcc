@@ -29,12 +29,11 @@ class NullValue {
     NullValue(const T &v) : is_null_(false), data_(v) {}
 
     operator bool() const { return !is_null_; }
-    bool operator==(std::nullptr_t) { return is_null_; }
     bool operator==(const T &v) { return !is_null_ && data_ == v; }
     reference_t operator=(const T &v) {
         return data_ = v, is_null_ = false, *this;
     }
-    T &operator*() { return data_; }
+    T &operator*() { return is_null_=false, data_; }
     const T &operator*() const { return data_; }
     friend std::ostream &operator<<(std::ostream &os, const_reference_t value) {
         if (!value) {
@@ -43,6 +42,12 @@ class NullValue {
             os << value.data_;
         }
     return os;
+    }
+    friend bool operator==(const_reference_t v, std::nullptr_t) {
+        return v.is_null_;
+    }
+    friend bool operator==(std::nullptr_t, const_reference_t v) {
+        return v.is_null_;
     }
    private:
     bool is_null_;

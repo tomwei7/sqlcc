@@ -64,13 +64,14 @@ TEST_F(MySQLDriverTest, Query) {
     Rows rows = stmt->query({});
     std::vector<std::string> columns = rows->columns();
     while(rows->next()) {
-        std::vector<Value> values(columns.size());
+        int64_t id;
+        std::string username;
+        NullInt64 age;
+        std::tm ctime;
+        int64_t ok;
+        std::vector<Value> values = {id, username, age, ctime, ok};
         rows->scan(values);
-        std::cerr << "id: " << std::get<int64_t>(values[0]) << std::endl;
-        std::cerr << "username: " << std::get<std::string>(values[1]) << std::endl;
-        std::cerr << "age: " << std::get<int64_t>(values[2]) << std::endl;
-        std::cerr << "ctime: " << std::get<std::string>(values[3]) << std::endl;
-        std::cerr << "ok: " << std::get<int64_t>(values[4]) << std::endl;
+        std::cout << values << std::endl;
     }
 }
 
