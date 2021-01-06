@@ -35,7 +35,7 @@ endif()
 add_executable(sqlcc_test sqlcc_test.cc)
 
 target_link_libraries(sqlcc_test 
-    PRIVATE gtest_main
+    PRIVATE sqlcc::sqlcc sqlcc::mysqldriver gtest_main
 )
 add_test(NAME sqlcc_test COMMAND sqlcc_test)
 

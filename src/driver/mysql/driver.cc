@@ -14,6 +14,10 @@ driver::Conn Driver::open(const std::string& dsn) {
     return std::make_unique<Connection>(cfg);
 }
 
+std::shared_ptr<Driver> create_mysql_driver() {
+    return std::make_shared<Driver>();
+}
+
 } // namespace mysql
 } // namespace driver
 } // namespace sqlcc

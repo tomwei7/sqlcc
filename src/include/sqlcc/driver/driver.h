@@ -116,6 +116,8 @@ void register_driver(const std::string &name, std::shared_ptr<Driver> driver);
 
 bool unregister_driver(const std::string &name);
 
+std::shared_ptr<Driver> get_driver(const std::string &name);
+
 }  // namespace driver
 }  // namespace sqlcc
 

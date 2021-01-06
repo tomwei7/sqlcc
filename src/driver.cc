@@ -5,8 +5,13 @@
 
 namespace sqlcc {
 namespace driver {
+namespace mysql {
+    extern std::shared_ptr<Driver> create_mysql_driver();
+}
 
-static std::map<std::string, std::shared_ptr<Driver>> driver_map;
+static std::map<std::string, std::shared_ptr<Driver>> driver_map = {
+    {"mysql", mysql::create_mysql_driver()},
+};
 
 void register_driver(const std::string& name, std::shared_ptr<Driver> driver) {
     const auto& it = driver_map.find(name);
@@ -25,5 +30,13 @@ bool unregister_driver(const std::string& name) {
     return true;
 }
 
-} // namespace driver
-} // namespace sqlcc
+std::shared_ptr<Driver> get_driver(const std::string &name) {
+    const auto& it = driver_map.find(name);
+    if (it == driver_map.end()) {
+        throw std::runtime_error("sql driver: " + name + " not exists");
+    }
+    return it->second;
+}
+
+}  // namespace driver
+}  // namespace sqlcc

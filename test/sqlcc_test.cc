@@ -4,11 +4,10 @@
 
 namespace sqlcc {
 
-TEST(ValueBind, ValueBind) {
-    std::time_t t = std::time(nullptr);
-    std::tm tm = *std::localtime(&t);
-    std::vector<driver::Value> values = merge_values(1, 2, 3, "test", tm);
-    std::cerr << "values: " << values << std::endl;
+TEST(sqlccTest, sqlccTest) {
+    DB db = sqlcc::open("mysql", "root:toor@tcp(127.0.0.1:3306)/testdb");
+    Result result  = db->exec("insert into table2 (username, age) values(?, ?)", "hello", 123);
+    std::cerr << "last_insert_id: " << result->last_insert_id() << " rows: " << result->rows_affected();
 }
 
 } // namespace sqlcc
