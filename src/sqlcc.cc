@@ -37,7 +37,7 @@ public:
     driver::Rows driver_rows_;
 };
 
-class StatementImpl: public Statement, std::enable_shared_from_this<StatementImpl> {
+class StatementImpl: public Statement, public std::enable_shared_from_this<StatementImpl> {
 public:
     StatementImpl(std::shared_ptr<ConnectionImpl> conn, const std::string& query);
     ~StatementImpl() {};
@@ -51,7 +51,7 @@ private:
     driver::Stmt dirver_stmt_;
 };
 
-class ConnectionImpl: public Connection, std::enable_shared_from_this<ConnectionImpl> {
+class ConnectionImpl: public Connection, public std::enable_shared_from_this<ConnectionImpl> {
 public:
     ConnectionImpl(driver::Conn&& conn): driver_conn_(std::move(conn)) {}
     ~ConnectionImpl() {}
@@ -82,11 +82,10 @@ Result StatementImpl::do_exec(const std::vector<driver::Value>& args) {
 }
 
 Rows StatementImpl::do_query(const std::vector<driver::Value>& args) {
-    driver::Rows rows = dirver_stmt_->query(args);
     return std::make_shared<RowsImpl>(shared_from_this(), args);
 }
 
-RowsImpl::RowsImpl(std::shared_ptr<StatementImpl> stmt, const std::vector<driver::Value>& args) {
+RowsImpl::RowsImpl(std::shared_ptr<StatementImpl> stmt, const std::vector<driver::Value>& args): stmt_(stmt) {
     driver_rows_ = stmt->dirver_stmt_->query(args);
 }
 
@@ -136,15 +135,11 @@ Stmt DatabaseImpl::prepare(const std::string& query) {
 }
 
 Result DatabaseImpl::do_exec(const std::string& query, const std::vector<driver::Value>& args) {
-    std::shared_ptr<ConnectionImpl> conn = this->get_conn();
-    std::shared_ptr<StatementImpl> stmt = conn->do_prepare(query);
-    return stmt->do_exec(args);
+    return get_conn()->do_prepare(query)->do_exec(args);
 }
 
 Rows DatabaseImpl::do_query(const std::string& query, const std::vector<driver::Value>& args) {
-    std::shared_ptr<ConnectionImpl> conn = this->get_conn();
-    std::shared_ptr<StatementImpl> stmt = conn->do_prepare(query);
-    return stmt->do_query(args);
+    return get_conn()->do_prepare(query)->do_query(args);
 }
 
 void DatabaseImpl::ping() {
