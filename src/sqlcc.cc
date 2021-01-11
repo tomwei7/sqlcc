@@ -1,13 +1,62 @@
 #include "sqlcc/sqlcc.h"
 
+#include <chrono>
+#include <list>
+#include <atomic>
+
 namespace sqlcc {
+
+class Pool {
+public:
+    Pool(std::shared_ptr<driver::Driver> driver, const std::string& dsn);
+    void set_conn_max_idle_time(const std::chrono::seconds& max_idle_time);
+    void set_conn_max_life_time(const std::chrono::seconds& max_life_time);
+    void set_max_idle_conns(const std::size_t max_idle_conns);
+    void set_max_open_conns(const std::size_t max_open_conns);
+    driver::Conn get_conn();
+    void put_conn(driver::Conn conn);
+private:
+    std::shared_ptr<driver::Driver> driver_;
+    std::string dsn_;
+
+    std::list<driver::Conn> idle_conns;
+
+    std::atomic<std::chrono::seconds> max_idle_time_;
+    std::atomic<std::chrono::seconds> max_life_time_;
+    std::atomic<std::size_t> max_idle_conns_; 
+    std::atomic<std::size_t> max_open_conns_; 
+};
+
+Pool::Pool(std::shared_ptr<driver::Driver> driver, const std::string& dsn): 
+    driver_(driver), dsn_(dsn),
+    max_idle_time_(std::chrono::seconds(0)),
+    max_life_time_(std::chrono::seconds(0)),
+    max_idle_conns_(0), max_open_conns_(0) {
+}
+
+void Pool::set_conn_max_idle_time(const std::chrono::seconds& max_idle_time) {
+    max_idle_time_ = max_idle_time;
+}
+
+void Pool::set_conn_max_life_time(const std::chrono::seconds& max_life_time) {
+    max_life_time_ = max_life_time;
+}
+
+void Pool::set_max_idle_conns(const std::size_t max_idle_conns) {
+    max_idle_conns_ = max_idle_conns;
+}
+
+void Pool::set_max_open_conns(const std::size_t max_open_conns) {
+    max_open_conns_ = max_open_conns;
+}
+
 
 class ConnectionImpl;
 class StatementImpl;
 
 class ResultImpl: public SQLResult {
 public:
-    ResultImpl(driver::Result&& result): result_(std::move(result)) {}
+    ResultImpl(driver::Result result): result_(result) {}
     ~ResultImpl() {}
     int64_t last_insert_id() override;
     int64_t rows_affected() override;
@@ -53,7 +102,7 @@ private:
 
 class ConnectionImpl: public Connection, public std::enable_shared_from_this<ConnectionImpl> {
 public:
-    ConnectionImpl(driver::Conn&& conn): driver_conn_(std::move(conn)) {}
+    ConnectionImpl(driver::Conn conn): driver_conn_(conn) {}
     ~ConnectionImpl() {}
     Stmt prepare(const std::string& query) override;
 protected:
@@ -78,7 +127,7 @@ StatementImpl::StatementImpl(std::shared_ptr<ConnectionImpl> conn, const std::st
 
 Result StatementImpl::do_exec(const std::vector<driver::Value>& args) {
     driver::Result result = dirver_stmt_->exec(args);
-    return std::make_shared<ResultImpl>(std::move(result));
+    return std::make_shared<ResultImpl>(result);
 }
 
 Rows StatementImpl::do_query(const std::vector<driver::Value>& args) {
@@ -126,7 +175,7 @@ Conn DatabaseImpl::conn() {
 
 std::shared_ptr<ConnectionImpl> DatabaseImpl::get_conn() {
     driver::Conn conn = driver_->open(dsn_);
-    return std::make_shared<ConnectionImpl>(std::move(conn));
+    return std::make_shared<ConnectionImpl>(conn);
 }
 
 Stmt DatabaseImpl::prepare(const std::string& query) {

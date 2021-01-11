@@ -48,7 +48,7 @@ Connection::Connection(const Config& cfg): cfg_(cfg) {
 }
 
 Stmt Connection::prepare(const std::string& query) {
-    return std::make_unique<Statement>(this, query);
+    return std::make_shared<Statement>(this, query);
 }
 
 Tx Connection::begin() {

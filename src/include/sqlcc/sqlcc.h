@@ -36,19 +36,33 @@ std::vector<driver::Value> merge_pointer_values(Args*... args) {
 }
 
 template <typename... Args>
-std::vector<driver::Value> split_dest_values(std::vector<driver::Value>& values, Args*... args) {
+std::vector<driver::Value> split_dest_values(std::vector<driver::Value>& values,
+                                             Args*... args) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
     std::size_t idx = 0;
     std::initializer_list<int>{(
         [&values, &idx](auto args) {
-        //std::visit([&args](auto&& value){
-        //        //using T = std::remove_pointer_t<decltype(args)>;
-        //        //*args = static_cast<T>(value);
-        //        *args = value;
-        //    }, values[idx]);
-            using T = std::remove_pointer_t<decltype(args)>;
-            *args = std::get<T>(values[idx]);
+            std::visit(
+                [args](auto&& value) {
+                    using value_t = std::decay_t<decltype(value)>;
+                    using args_t = std::remove_pointer_t<Args>;
+                    if constexpr (std::is_same_v<value_t, args_t>) {
+                        *args = static_cast<args_t>(value);
+                    } else if constexpr (std::is_same_v<value_t, int64_t> &&
+                                         std::is_integral_v<args_t>) {
+                        *args = static_cast<args_t>(value);
+                    } else if constexpr (std::is_same_v<value_t, uint64_t> &&
+                                         std::is_integral_v<args_t>) {
+                        *args = static_cast<args_t>(value);
+                    } else if constexpr (std::is_same_v<value_t, double> &&
+                                         std::is_floating_point_v<args_t>) {
+                        *args = static_cast<args_t>(value);
+                    } else {
+                        throw std::runtime_error("unable to scan value");
+                    }
+                },
+                values[idx]);
             idx++;
         }(std::forward<Args*>(args)),
         0)...};
@@ -88,6 +102,7 @@ class SQLRows {
         do_scan(dest);
         split_dest_values(dest, args...);
     }
+
    protected:
     virtual void do_scan(std::vector<driver::Value>& dest) = 0;
 };
@@ -105,6 +120,7 @@ class Statement {
         std::vector<driver::Value> args_values = merge_const_values(args...);
         return do_query(args_values);
     }
+
    protected:
     virtual Result do_exec(const std::vector<driver::Value>& args) = 0;
     virtual Rows do_query(const std::vector<driver::Value>& args) = 0;
@@ -133,10 +149,12 @@ class Database {
         return do_query(query, args_values);
     }
     virtual Stmt prepare(const std::string& query) = 0;
+
    protected:
     virtual Result do_exec(const std::string& query,
                            const std::vector<driver::Value>& args) = 0;
-    virtual Rows do_query(const std::string& query, const std::vector<driver::Value>& args) = 0;
+    virtual Rows do_query(const std::string& query,
+                          const std::vector<driver::Value>& args) = 0;
 };
 
 DB open(const std::string& driver_name, const std::string& dsn);

@@ -62,11 +62,11 @@ using NullTm = NullValue<std::tm>;
 
 using Value = std::variant<int64_t, uint64_t, double, std::string, std::tm, NullInt64, NullUInt64, NullDouble, NullString, NullTm>;
 
-using Conn = std::unique_ptr<Connection>;
-using Stmt = std::unique_ptr<Statement>;
-using Tx = std::unique_ptr<Transaction>;
-using Result = std::unique_ptr<SQLResult>;
-using Rows = std::unique_ptr<SQLRows>;
+using Conn = std::shared_ptr<Connection>;
+using Stmt = std::shared_ptr<Statement>;
+using Tx = std::shared_ptr<Transaction>;
+using Result = std::shared_ptr<SQLResult>;
+using Rows = std::shared_ptr<SQLRows>;
 
 class SQLResult {
    public:

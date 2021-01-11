@@ -14,7 +14,7 @@ TEST(sqlccTest, sqlccTest) {
         std::cerr << "c: " << column << std::endl;
     }
     while(rows->next()) {
-        int64_t id;
+        int id;
         std::string username;
         int64_t age;
         rows->scan(&id, &username, &age);

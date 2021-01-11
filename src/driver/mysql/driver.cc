@@ -11,7 +11,7 @@ Driver::Driver() {}
 
 driver::Conn Driver::open(const std::string& dsn) {
     Config cfg = parse_dsn(dsn);
-    return std::make_unique<Connection>(cfg);
+    return std::make_shared<Connection>(cfg);
 }
 
 std::shared_ptr<Driver> create_mysql_driver() {

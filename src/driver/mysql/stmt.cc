@@ -351,7 +351,7 @@ Result Statement::exec(const std::vector<Value> &args) {
     }
     int64_t last_insert_id = mysql_stmt_insert_id(stmt_);
     int64_t rows_affected = mysql_stmt_affected_rows(stmt_);
-    return std::make_unique<SQLResult>(last_insert_id, rows_affected);
+    return std::make_shared<SQLResult>(last_insert_id, rows_affected);
 }
 
 void Statement::bind_value(const std::vector<Value> &args) {
@@ -378,7 +378,7 @@ Rows Statement::query(const std::vector<Value> &args) {
         throw exception_from_stmt(stmt_);
     }
 
-    return std::make_unique<SQLRows>(stmt_);
+    return std::make_shared<SQLRows>(stmt_);
 }
 
 }  // namespace mysql
