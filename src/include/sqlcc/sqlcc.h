@@ -8,7 +8,7 @@
 namespace sqlcc {
 
 template <typename... Args>
-std::vector<driver::Value> merge_const_values(const Args&... args) {
+std::vector<driver::Value> MergeConstValues(const Args&... args) {
     std::vector<driver::Value> values;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
@@ -22,7 +22,7 @@ std::vector<driver::Value> merge_const_values(const Args&... args) {
 }
 
 template <typename... Args>
-std::vector<driver::Value> merge_pointer_values(Args*... args) {
+std::vector<driver::Value> MergePointerValues(Args*... args) {
     std::vector<driver::Value> values;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
@@ -36,7 +36,7 @@ std::vector<driver::Value> merge_pointer_values(Args*... args) {
 }
 
 template <typename... Args>
-std::vector<driver::Value> split_dest_values(std::vector<driver::Value>& values,
+std::vector<driver::Value> SplitDestValues(std::vector<driver::Value>& values,
                                              Args*... args) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
@@ -78,7 +78,6 @@ class SQLResult;
 class SQLRows;
 
 using DB = std::shared_ptr<Database>;
-using Conn = std::shared_ptr<Connection>;
 using Stmt = std::shared_ptr<Statement>;
 using Tx = std::shared_ptr<Transaction>;
 using Result = std::shared_ptr<SQLResult>;
@@ -87,76 +86,76 @@ using Rows = std::shared_ptr<SQLRows>;
 class SQLResult {
    public:
     virtual ~SQLResult(){};
-    virtual int64_t last_insert_id() = 0;
-    virtual int64_t rows_affected() = 0;
+    virtual int64_t LastInsertID() = 0;
+    virtual int64_t RowsAffected() = 0;
 };
 
 class SQLRows {
    public:
     virtual ~SQLRows() {}
-    virtual const std::vector<std::string>& columns() const = 0;
-    virtual bool next() = 0;
+    virtual const std::vector<std::string>& Columns() const = 0;
+    virtual bool Next() = 0;
     template <typename... Args>
     void scan(Args*... args) {
-        std::vector<driver::Value> dest = merge_pointer_values(args...);
-        do_scan(dest);
-        split_dest_values(dest, args...);
+        std::vector<driver::Value> dest = MergePointerValues(args...);
+        DoScan(dest);
+        SplitDestValues(dest, args...);
     }
 
    protected:
-    virtual void do_scan(std::vector<driver::Value>& dest) = 0;
+    virtual void DoScan(std::vector<driver::Value>& dest) = 0;
 };
 
 class Statement {
    public:
     virtual ~Statement() {}
     template <typename... Args>
-    Result exec(const Args&... args) {
-        std::vector<driver::Value> args_values = merge_const_values(args...);
-        return do_exec(args_values);
+    Result Exec(const Args&... args) {
+        std::vector<driver::Value> args_values = MergeConstValues(args...);
+        return DoExec(args_values);
     }
     template <typename... Args>
-    Rows query(const Args&... args) {
-        std::vector<driver::Value> args_values = merge_const_values(args...);
-        return do_query(args_values);
+    Rows Query(const Args&... args) {
+        std::vector<driver::Value> args_values = MergeConstValues(args...);
+        return DoQuery(args_values);
     }
 
    protected:
-    virtual Result do_exec(const std::vector<driver::Value>& args) = 0;
-    virtual Rows do_query(const std::vector<driver::Value>& args) = 0;
+    virtual Result DoExec(const std::vector<driver::Value>& args) = 0;
+    virtual Rows DoQuery(const std::vector<driver::Value>& args) = 0;
 };
 
 class Connection {
    public:
     virtual ~Connection() {}
-    virtual Stmt prepare(const std::string& query) = 0;
+    virtual Stmt Prepare(const std::string& query) = 0;
 };
 
 class Database {
    public:
     virtual ~Database(){};
-    virtual Conn conn() = 0;
-    virtual void ping() = 0;
-    virtual std::shared_ptr<driver::Driver> driver() = 0;
+    virtual std::shared_ptr<Connection> Conn() = 0;
+    virtual void Ping() = 0;
+    virtual std::shared_ptr<driver::Driver> Driver() = 0;
     template <typename... Args>
     Result exec(const std::string& query, const Args&... args) {
-        std::vector<driver::Value> args_values = merge_const_values(args...);
-        return do_exec(query, args_values);
+        std::vector<driver::Value> args_values = MergeConstValues(args...);
+        return DoExec(query, args_values);
     }
     template <typename... Args>
     Rows query(const std::string& query, const Args&... args) {
-        std::vector<driver::Value> args_values = merge_const_values(args...);
-        return do_query(query, args_values);
+        std::vector<driver::Value> args_values = MergeConstValues(args...);
+        return DoQuery(query, args_values);
     }
-    virtual Stmt prepare(const std::string& query) = 0;
+    virtual Stmt Prepare(const std::string& query) = 0;
 
    protected:
-    virtual Result do_exec(const std::string& query,
+    virtual Result DoExec(const std::string& query,
                            const std::vector<driver::Value>& args) = 0;
-    virtual Rows do_query(const std::string& query,
+    virtual Rows DoQuery(const std::string& query,
                           const std::vector<driver::Value>& args) = 0;
 };
 
-DB open(const std::string& driver_name, const std::string& dsn);
+DB Open(const std::string& driver_name, const std::string& dsn);
 
 }  // namespace sqlcc

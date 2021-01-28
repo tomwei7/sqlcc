@@ -8,7 +8,7 @@ namespace sqlcc {
 namespace driver {
 namespace mysql {
 
-static void set_mysql_options(const Config& cfg, MYSQL* mysql) {
+static void SetMySQLOptions(const Config& cfg, MYSQL* mysql) {
     int ret = 0;
     ret = mysql_optionsv(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &cfg.timeout);
     if (ret != 0) 
@@ -31,7 +31,7 @@ static void set_mysql_options(const Config& cfg, MYSQL* mysql) {
 
 Connection::Connection(const Config& cfg): cfg_(cfg) {
     mysql_init(&mysql_);
-    set_mysql_options(cfg_, &mysql_);
+    SetMySQLOptions(cfg_, &mysql_);
 
     const char* passwd = nullptr;
     if (!cfg.passwd.empty()) {
@@ -47,19 +47,19 @@ Connection::Connection(const Config& cfg): cfg_(cfg) {
     }
 }
 
-Stmt Connection::prepare(const std::string& query) {
+Stmt Connection::Prepare(const std::string& query) {
     return std::make_shared<Statement>(this, query);
 }
 
-Tx Connection::begin() {
+Tx Connection::Begin() {
     return nullptr;
 }
 
-void Connection::enter_thread() {
+void Connection::EnterThread() {
     mysql_thread_init();
 }
 
-void Connection::leave_thread() {
+void Connection::LeaveThread() {
     mysql_thread_end();
 }
 

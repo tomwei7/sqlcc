@@ -6,14 +6,14 @@
 namespace sqlcc {
 namespace driver {
 namespace mysql {
-    extern std::shared_ptr<Driver> create_mysql_driver();
+    extern std::shared_ptr<Driver> CreateMySQLDriver();
 }
 
 static std::map<std::string, std::shared_ptr<Driver>> driver_map = {
-    {"mysql", mysql::create_mysql_driver()},
+    {"mysql", mysql::CreateMySQLDriver()},
 };
 
-void register_driver(const std::string& name, std::shared_ptr<Driver> driver) {
+void RegisterDriver(const std::string& name, std::shared_ptr<Driver> driver) {
     const auto& it = driver_map.find(name);
     if (it != driver_map.end()) {
         throw std::runtime_error("sql driver: " + name + " alreay register");
@@ -21,7 +21,7 @@ void register_driver(const std::string& name, std::shared_ptr<Driver> driver) {
     driver_map[name] = driver;
 }
 
-bool unregister_driver(const std::string& name) {
+bool UnregisterDriver(const std::string& name) {
     const auto& it = driver_map.find(name);
     if (it == driver_map.end()) {
         return false;
@@ -30,7 +30,7 @@ bool unregister_driver(const std::string& name) {
     return true;
 }
 
-std::shared_ptr<Driver> get_driver(const std::string &name) {
+std::shared_ptr<Driver> GetDriver(const std::string &name) {
     const auto& it = driver_map.find(name);
     if (it == driver_map.end()) {
         throw std::runtime_error("sql driver: " + name + " not exists");

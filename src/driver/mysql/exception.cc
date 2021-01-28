@@ -14,14 +14,14 @@ static std::string bind_error_msg(int code, const char* sqlstate, const char* er
     return buf.str();
 }
 
-sqlcc::Exception exception_from_stmt(MYSQL_STMT* stmt) {
+sqlcc::Exception ExceptionFromStmt(MYSQL_STMT* stmt) {
     int code = (int)mysql_stmt_errno(stmt);
     assert(code);
 
     return sqlcc::Exception(code, bind_error_msg(code, mysql_stmt_sqlstate(stmt), mysql_stmt_error(stmt)));
 }
 
-sqlcc::Exception exception_from_mysql(MYSQL* mysql) {
+sqlcc::Exception ExceptionFromMySQL(MYSQL* mysql) {
     int code = (int)mysql_errno(mysql);
     assert(code);
 

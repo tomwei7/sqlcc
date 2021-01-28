@@ -9,10 +9,10 @@ namespace driver {
 namespace mysql {
 
 // create exception from stmt handler
-sqlcc::Exception exception_from_stmt(MYSQL_STMT* stmt);
+sqlcc::Exception ExceptionFromStmt(MYSQL_STMT* stmt);
 
 // create exception from mysql handler
-sqlcc::Exception exception_from_mysql(MYSQL* mysql);
+sqlcc::Exception ExceptionFromMySQL(MYSQL* mysql);
 
 } // namespace mysql
 } // namespace driver

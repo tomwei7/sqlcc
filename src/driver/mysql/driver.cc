@@ -9,12 +9,12 @@ namespace mysql {
 
 Driver::Driver() {}
 
-driver::Conn Driver::open(const std::string& dsn) {
-    Config cfg = parse_dsn(dsn);
+driver::Conn Driver::Open(const std::string& dsn) {
+    Config cfg = ParseDSN(dsn);
     return std::make_shared<Connection>(cfg);
 }
 
-std::shared_ptr<Driver> create_mysql_driver() {
+std::shared_ptr<Driver> CreateMySQLDriver() {
     return std::make_shared<Driver>();
 }
 

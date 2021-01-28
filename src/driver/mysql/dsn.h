@@ -23,7 +23,7 @@ struct Config {
 std::ostream& operator<<(std::ostream& os, const Config& cfg);
 
 // [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
-Config parse_dsn(const std::string& dsn);
+Config ParseDSN(const std::string& dsn);
 
 } // namespace mysql
 } // namespace driver

@@ -14,7 +14,7 @@ namespace mysql {
 
 TEST(DSN, Basic) {
     std::string dsn = "root:toor@tcp(10.10.2.3:4455)/testdb";
-    Config cfg = parse_dsn(dsn);
+    Config cfg = ParseDSN(dsn);
     EXPECT_EQ("root", cfg.user);
     EXPECT_EQ("toor", cfg.passwd);
     EXPECT_EQ("10.10.2.3", cfg.host);
@@ -24,7 +24,7 @@ TEST(DSN, Basic) {
 
 TEST(DSN, WithQuery) {
     std::string dsn = "root:toor@tcp(10.10.2.3:4455)/testdb?timeout=10&read_timeout=6&write_timeout=8&reconnect=0&charset=utf-8";
-    Config cfg = parse_dsn(dsn);
+    Config cfg = ParseDSN(dsn);
     EXPECT_EQ("root", cfg.user);
     EXPECT_EQ("toor", cfg.passwd);
     EXPECT_EQ("10.10.2.3", cfg.host);
@@ -39,7 +39,7 @@ TEST(DSN, WithQuery) {
 
 TEST(DSN, ToString) {
     std::string dsn = "root:toor@tcp(10.10.2.3:4455)/testdb";
-    Config cfg = parse_dsn(dsn);
+    Config cfg = ParseDSN(dsn);
     std::stringstream buf;
     buf << cfg;
     EXPECT_EQ(dsn, buf.str());
@@ -59,18 +59,18 @@ TEST_F(MySQLDriverTest, Exec) {
 }
 
 TEST_F(MySQLDriverTest, Query) {
-    Conn conn = driver.open("root:toor@tcp(127.0.0.1:3306)/testdb");
-    Stmt stmt = conn->prepare("select * from table1");
-    Rows rows = stmt->query({});
-    std::vector<std::string> columns = rows->columns();
-    while(rows->next()) {
+    Conn conn = driver.Open("root:toor@tcp(127.0.0.1:3306)/testdb");
+    Stmt stmt = conn->Prepare("select * from table1");
+    Rows rows = stmt->Query({});
+    std::vector<std::string> columns = rows->Columns();
+    while(rows->Next()) {
         int64_t id;
         std::string username;
         NullInt64 age;
         std::tm ctime;
         int64_t ok;
         std::vector<Value> values = {id, username, age, ctime, ok};
-        rows->scan(values);
+        rows->Scan(values);
         std::cout << values << std::endl;
     }
 }

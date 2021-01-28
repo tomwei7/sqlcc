@@ -11,7 +11,7 @@ namespace mysql {
 class Driver : public driver::Driver {
 public:
     Driver();
-    driver::Conn open(const std::string& name) override;
+    driver::Conn Open(const std::string& name) override;
 };
 
 } // namespace mysql

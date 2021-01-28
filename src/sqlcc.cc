@@ -6,51 +6,6 @@
 
 namespace sqlcc {
 
-class Pool {
-public:
-    Pool(std::shared_ptr<driver::Driver> driver, const std::string& dsn);
-    void set_conn_max_idle_time(const std::chrono::seconds& max_idle_time);
-    void set_conn_max_life_time(const std::chrono::seconds& max_life_time);
-    void set_max_idle_conns(const std::size_t max_idle_conns);
-    void set_max_open_conns(const std::size_t max_open_conns);
-    driver::Conn get_conn();
-    void put_conn(driver::Conn conn);
-private:
-    std::shared_ptr<driver::Driver> driver_;
-    std::string dsn_;
-
-    std::list<driver::Conn> idle_conns;
-
-    std::atomic<std::chrono::seconds> max_idle_time_;
-    std::atomic<std::chrono::seconds> max_life_time_;
-    std::atomic<std::size_t> max_idle_conns_; 
-    std::atomic<std::size_t> max_open_conns_; 
-};
-
-Pool::Pool(std::shared_ptr<driver::Driver> driver, const std::string& dsn): 
-    driver_(driver), dsn_(dsn),
-    max_idle_time_(std::chrono::seconds(0)),
-    max_life_time_(std::chrono::seconds(0)),
-    max_idle_conns_(0), max_open_conns_(0) {
-}
-
-void Pool::set_conn_max_idle_time(const std::chrono::seconds& max_idle_time) {
-    max_idle_time_ = max_idle_time;
-}
-
-void Pool::set_conn_max_life_time(const std::chrono::seconds& max_life_time) {
-    max_life_time_ = max_life_time;
-}
-
-void Pool::set_max_idle_conns(const std::size_t max_idle_conns) {
-    max_idle_conns_ = max_idle_conns;
-}
-
-void Pool::set_max_open_conns(const std::size_t max_open_conns) {
-    max_open_conns_ = max_open_conns;
-}
-
-
 class ConnectionImpl;
 class StatementImpl;
 
@@ -58,18 +13,18 @@ class ResultImpl: public SQLResult {
 public:
     ResultImpl(driver::Result result): result_(result) {}
     ~ResultImpl() {}
-    int64_t last_insert_id() override;
-    int64_t rows_affected() override;
+    int64_t LastInsertID() override;
+    int64_t RowsAffected() override;
 private:
     driver::Result result_;
 };
 
-int64_t ResultImpl::last_insert_id() {
-    return result_->last_insert_id();
+int64_t ResultImpl::LastInsertID() {
+    return result_->LastInsertID();
 }
 
-int64_t ResultImpl::rows_affected() {
-    return result_->rows_affected();
+int64_t ResultImpl::RowsAffected() {
+    return result_->RowsAffected();
 }
 
 class RowsImpl: public SQLRows {
@@ -77,10 +32,10 @@ public:
    public:
     RowsImpl(std::shared_ptr<StatementImpl> stmt, const std::vector<driver::Value>& args);
     ~RowsImpl() {}
-    const std::vector<std::string> &columns() const override;
-    bool next() override;
+    const std::vector<std::string> &Columns() const override;
+    bool Next() override;
    protected:
-    void do_scan(std::vector<driver::Value> &dest) override;
+    void DoScan(std::vector<driver::Value> &dest) override;
    private:
     std::shared_ptr<StatementImpl> stmt_;
     driver::Rows driver_rows_;
@@ -91,8 +46,8 @@ public:
     StatementImpl(std::shared_ptr<ConnectionImpl> conn, const std::string& query);
     ~StatementImpl() {};
 protected:
-    Result do_exec(const std::vector<driver::Value>& args);
-    Rows do_query(const std::vector<driver::Value>& args);
+    Result DoExec(const std::vector<driver::Value>& args);
+    Rows DoQuery(const std::vector<driver::Value>& args);
 private:
     friend class RowsImpl;
     friend class DatabaseImpl;
@@ -104,64 +59,64 @@ class ConnectionImpl: public Connection, public std::enable_shared_from_this<Con
 public:
     ConnectionImpl(driver::Conn conn): driver_conn_(conn) {}
     ~ConnectionImpl() {}
-    Stmt prepare(const std::string& query) override;
+    Stmt Prepare(const std::string& query) override;
 protected:
-    std::shared_ptr<StatementImpl> do_prepare(const std::string& query);
+    std::shared_ptr<StatementImpl> DoPrepare(const std::string& query);
 private:
     friend class StatementImpl;
     friend class DatabaseImpl;
     driver::Conn driver_conn_;
 };
 
-Stmt ConnectionImpl::prepare(const std::string& query) {
-    return do_prepare(query);
+Stmt ConnectionImpl::Prepare(const std::string& query) {
+    return DoPrepare(query);
 }
 
-std::shared_ptr<StatementImpl> ConnectionImpl::do_prepare(const std::string& query) {
+std::shared_ptr<StatementImpl> ConnectionImpl::DoPrepare(const std::string& query) {
     return std::make_shared<StatementImpl>(shared_from_this(), query);
 }
 
 StatementImpl::StatementImpl(std::shared_ptr<ConnectionImpl> conn, const std::string& query): conn_(conn) {
-    dirver_stmt_ = conn_->driver_conn_->prepare(query);
+    dirver_stmt_ = conn_->driver_conn_->Prepare(query);
 }
 
-Result StatementImpl::do_exec(const std::vector<driver::Value>& args) {
-    driver::Result result = dirver_stmt_->exec(args);
+Result StatementImpl::DoExec(const std::vector<driver::Value>& args) {
+    driver::Result result = dirver_stmt_->Exec(args);
     return std::make_shared<ResultImpl>(result);
 }
 
-Rows StatementImpl::do_query(const std::vector<driver::Value>& args) {
+Rows StatementImpl::DoQuery(const std::vector<driver::Value>& args) {
     return std::make_shared<RowsImpl>(shared_from_this(), args);
 }
 
 RowsImpl::RowsImpl(std::shared_ptr<StatementImpl> stmt, const std::vector<driver::Value>& args): stmt_(stmt) {
-    driver_rows_ = stmt->dirver_stmt_->query(args);
+    driver_rows_ = stmt->dirver_stmt_->Query(args);
 }
 
-const std::vector<std::string>& RowsImpl::columns() const {
-    return driver_rows_->columns();
+const std::vector<std::string>& RowsImpl::Columns() const {
+    return driver_rows_->Columns();
 }
 
-bool RowsImpl::next() {
-    return driver_rows_->next();
+bool RowsImpl::Next() {
+    return driver_rows_->Next();
 }
 
-void RowsImpl::do_scan(std::vector<driver::Value> &dest) {
-    return driver_rows_->scan(dest);
+void RowsImpl::DoScan(std::vector<driver::Value> &dest) {
+    return driver_rows_->Scan(dest);
 }
 
 class DatabaseImpl: public Database {
 public:
     DatabaseImpl(std::shared_ptr<driver::Driver> driver, const std::string& dsn);
     ~DatabaseImpl() {}
-    Stmt prepare(const std::string& query) override;
-    Conn conn() override;
-    void ping() override;
-    std::shared_ptr<driver::Driver> driver() override;
+    Stmt Prepare(const std::string& query) override;
+    std::shared_ptr<Connection> Conn() override;
+    void Ping() override;
+    std::shared_ptr<driver::Driver> Driver() override;
 protected:
-    std::shared_ptr<ConnectionImpl> get_conn();
-    Result do_exec(const std::string& query, const std::vector<driver::Value>& args) override;
-    Rows do_query(const std::string& query, const std::vector<driver::Value>& args) override;
+    std::shared_ptr<ConnectionImpl> GetConn();
+    Result DoExec(const std::string& query, const std::vector<driver::Value>& args) override;
+    Rows DoQuery(const std::string& query, const std::vector<driver::Value>& args) override;
 private:
     std::shared_ptr<driver::Driver> driver_;
     std::string dsn_;
@@ -169,38 +124,37 @@ private:
 
 DatabaseImpl::DatabaseImpl(std::shared_ptr<driver::Driver> driver, const std::string& dsn): driver_(driver), dsn_(dsn) {}
 
-Conn DatabaseImpl::conn() {
-    return get_conn();
+std::shared_ptr<Connection> DatabaseImpl::Conn() {
+    return GetConn();
 }
 
-std::shared_ptr<ConnectionImpl> DatabaseImpl::get_conn() {
-    driver::Conn conn = driver_->open(dsn_);
+std::shared_ptr<ConnectionImpl> DatabaseImpl::GetConn() {
+    driver::Conn conn = driver_->Open(dsn_);
     return std::make_shared<ConnectionImpl>(conn);
 }
 
-Stmt DatabaseImpl::prepare(const std::string& query) {
-    Conn conn = this->conn();
-    return conn->prepare(query);
+Stmt DatabaseImpl::Prepare(const std::string& query) {
+    return this->Conn()->Prepare(query);
 }
 
-Result DatabaseImpl::do_exec(const std::string& query, const std::vector<driver::Value>& args) {
-    return get_conn()->do_prepare(query)->do_exec(args);
+Result DatabaseImpl::DoExec(const std::string& query, const std::vector<driver::Value>& args) {
+    return GetConn()->DoPrepare(query)->DoExec(args);
 }
 
-Rows DatabaseImpl::do_query(const std::string& query, const std::vector<driver::Value>& args) {
-    return get_conn()->do_prepare(query)->do_query(args);
+Rows DatabaseImpl::DoQuery(const std::string& query, const std::vector<driver::Value>& args) {
+    return GetConn()->DoPrepare(query)->DoQuery(args);
 }
 
-void DatabaseImpl::ping() {
-    driver_->open(dsn_);
+void DatabaseImpl::Ping() {
+    driver_->Open(dsn_);
 }
 
-std::shared_ptr<driver::Driver> DatabaseImpl::driver() {
+std::shared_ptr<driver::Driver> DatabaseImpl::Driver() {
     return driver_;
 }
 
-DB open(const std::string &driver_name, const std::string &dsn) {
-    std::shared_ptr<driver::Driver> driver = driver::get_driver(driver_name);
+DB Open(const std::string &driver_name, const std::string &dsn) {
+    std::shared_ptr<driver::Driver> driver = driver::GetDriver(driver_name);
     return std::make_shared<DatabaseImpl>(driver, dsn);
 }
 

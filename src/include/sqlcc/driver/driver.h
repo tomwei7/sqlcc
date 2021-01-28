@@ -71,52 +71,52 @@ using Rows = std::shared_ptr<SQLRows>;
 class SQLResult {
    public:
     virtual ~SQLResult(){};
-    virtual int64_t last_insert_id() = 0;
-    virtual int64_t rows_affected() = 0;
+    virtual int64_t LastInsertID() = 0;
+    virtual int64_t RowsAffected() = 0;
 };
 
 class SQLRows {
    public:
     virtual ~SQLRows() {}
-    virtual const std::vector<std::string> &columns() const = 0;
-    virtual bool next() = 0;
-    virtual void scan(std::vector<Value> &dest) = 0;
+    virtual const std::vector<std::string> &Columns() const = 0;
+    virtual bool Next() = 0;
+    virtual void Scan(std::vector<Value> &dest) = 0;
 };
 
 class Statement {
    public:
     virtual ~Statement(){};
-    virtual std::size_t num_input() = 0;
-    virtual Result exec(const std::vector<Value> &args) = 0;
-    virtual Rows query(const std::vector<Value> &args) = 0;
+    virtual std::size_t NumInput() = 0;
+    virtual Result Exec(const std::vector<Value> &args) = 0;
+    virtual Rows Query(const std::vector<Value> &args) = 0;
 };
 
 class Transaction {
    public:
-    virtual void commit() = 0;
-    virtual void rollback() = 0;
+    virtual void Commit() = 0;
+    virtual void Rollback() = 0;
 };
 
 class Connection {
    public:
-    virtual Stmt prepare(const std::string &query) = 0;
-    virtual Tx begin() = 0;
-    virtual void enter_thread() = 0;
-    virtual void leave_thread() = 0;
+    virtual Stmt Prepare(const std::string &query) = 0;
+    virtual Tx Begin() = 0;
+    virtual void EnterThread() = 0;
+    virtual void LeaveThread() = 0;
 };
 
 class Driver {
    public:
     Driver() = default;
     virtual ~Driver() = default;
-    virtual Conn open(const std::string &name) = 0;
+    virtual Conn Open(const std::string &name) = 0;
 };
 
-void register_driver(const std::string &name, std::shared_ptr<Driver> driver);
+void RegisterDriver(const std::string &name, std::shared_ptr<Driver> driver);
 
-bool unregister_driver(const std::string &name);
+bool UnregisterDriver(const std::string &name);
 
-std::shared_ptr<Driver> get_driver(const std::string &name);
+std::shared_ptr<Driver> GetDriver(const std::string &name);
 
 }  // namespace driver
 }  // namespace sqlcc

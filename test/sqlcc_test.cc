@@ -5,15 +5,15 @@
 namespace sqlcc {
 
 TEST(sqlccTest, sqlccTest) {
-    DB db = sqlcc::open("mysql", "root:toor@tcp(127.0.0.1:3306)/testdb");
+    DB db = sqlcc::Open("mysql", "root:toor@tcp(127.0.0.1:3306)/testdb");
     Result result  = db->exec("insert into table2 (username, age) values(?, ?)", "hello", 123);
-    std::cerr << "last_insert_id: " << result->last_insert_id() << " rows: " << result->rows_affected() << std::endl;
+    std::cerr << "last_insert_id: " << result->LastInsertID() << " rows: " << result->RowsAffected() << std::endl;
     Rows rows = db->query("select id, username, age from table2");
     std::cerr << "query done" << std::endl;
-    for (auto column: rows->columns()) {
+    for (auto column: rows->Columns()) {
         std::cerr << "c: " << column << std::endl;
     }
-    while(rows->next()) {
+    while(rows->Next()) {
         int id;
         std::string username;
         int64_t age;

@@ -16,8 +16,8 @@ namespace mysql {
 class SQLResult : public driver::SQLResult {
    public:
     SQLResult(int64_t last_insert_id, int64_t rows_affected);
-    int64_t last_insert_id() override;
-    int64_t rows_affected() override;
+    int64_t LastInsertID() override;
+    int64_t RowsAffected() override;
 
    private:
     int64_t last_insert_id_;
@@ -27,17 +27,17 @@ class SQLResult : public driver::SQLResult {
 SQLResult::SQLResult(int64_t last_insert_id, int64_t rows_affected)
     : last_insert_id_(last_insert_id), rows_affected_(rows_affected) {}
 
-int64_t SQLResult::last_insert_id() { return last_insert_id_; }
+int64_t SQLResult::LastInsertID() { return last_insert_id_; }
 
-int64_t SQLResult::rows_affected() { return rows_affected_; }
+int64_t SQLResult::RowsAffected() { return rows_affected_; }
 
 class SQLRows : public driver::SQLRows {
    public:
     SQLRows(MYSQL_STMT *stmt);
     ~SQLRows();
-    virtual const std::vector<std::string> &columns() const override;
-    virtual bool next() override;
-    virtual void scan(std::vector<Value> &dest) override;
+    virtual const std::vector<std::string> &Columns() const override;
+    virtual bool Next() override;
+    virtual void Scan(std::vector<Value> &dest) override;
 
    private:
     MYSQL_STMT *stmt_;
@@ -47,7 +47,7 @@ class SQLRows : public driver::SQLRows {
     MYSQL_BIND *bind_;
 };
 
-static void allocate_result_bind(MYSQL_FIELD *field, MYSQL_BIND *bind) {
+static void AllocateResultBind(MYSQL_FIELD *field, MYSQL_BIND *bind) {
     bind->length = new uint64_t(0);
     bind->error = new my_bool(0);
     bind->is_null = new my_bool(0);
@@ -79,7 +79,7 @@ static void allocate_result_bind(MYSQL_FIELD *field, MYSQL_BIND *bind) {
     }
 }
 
-static Value nullvalue_from_bind(MYSQL_BIND *bind) {
+static Value NullValueFromBind(MYSQL_BIND *bind) {
     switch (bind->buffer_type) {
         case (MYSQL_TYPE_LONGLONG):
             return NullInt64();
@@ -90,7 +90,7 @@ static Value nullvalue_from_bind(MYSQL_BIND *bind) {
     }
 }
 
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t& dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to int64_t");
     }
@@ -99,7 +99,7 @@ static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t& dest) {
     }
     dest = *(int64_t *)(bind->buffer);
 }
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t& dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to uint64_t");
     }
@@ -108,7 +108,7 @@ static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t& dest) {
     }
     dest = *(uint64_t *)(bind->buffer);
 }
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, double& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, double& dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to double");
     }
@@ -117,7 +117,7 @@ static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, double& dest) {
     }
     dest = *(double *)(bind->buffer);
 }
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string& dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to string");
     }
@@ -127,7 +127,7 @@ static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string& dest) {
     dest = std::string((char *)bind->buffer, *(bind->length));
 }
 
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm& dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to tm");
     }
@@ -143,22 +143,22 @@ static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm& dest) {
 }
 
 template<typename T>
-static void bind_to(MYSQL_FIELD *field, MYSQL_BIND *bind, T& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, T& dest) {
     bool is_null = *(bind->is_null);
     if (is_null) {
         dest = T();
         return;
     }
-    return bind_to(field, bind, *dest);
+    return BindTo(field, bind, *dest);
 }
 
-static void bind_to_value(MYSQL_FIELD *field, MYSQL_BIND *bind, Value &value) {
+static void BindToValue(MYSQL_FIELD *field, MYSQL_BIND *bind, Value &value) {
     std::visit( [&field, &bind](auto &&value) {
-        bind_to(field, bind, value);
+        BindTo(field, bind, value);
     }, value);
     bool is_null = *bind->is_null;
     if (is_null) {
-        value = nullvalue_from_bind(bind);
+        value = NullValueFromBind(bind);
         return;
     }
 }
@@ -173,29 +173,29 @@ SQLRows::SQLRows(MYSQL_STMT *stmt)
     bind_ = new MYSQL_BIND[fields_size_];
     memset(bind_, 0, sizeof(MYSQL_BIND) * fields_size_);
     for (std::size_t i = 0; i < fields_size_; i++) {
-        allocate_result_bind(&fields_[i], &bind_[i]);
+        AllocateResultBind(&fields_[i], &bind_[i]);
     }
     int ret = mysql_stmt_bind_result(stmt_, bind_);
     if (ret != 0) {
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
 }
 
-bool SQLRows::next() {
+bool SQLRows::Next() {
     int ret = mysql_stmt_fetch(stmt_);
     if (ret != 0) {
         if (ret == MYSQL_NO_DATA) {
             return false;
         }
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
     return true;
 }
 
-void SQLRows::scan(std::vector<Value> &dest) {
+void SQLRows::Scan(std::vector<Value> &dest) {
     assert(dest.size() == fields_size_);
     for (std::size_t i = 0; i < fields_size_; i++) {
-        bind_to_value(&fields_[i], &bind_[i], dest[i]);
+        BindToValue(&fields_[i], &bind_[i], dest[i]);
     }
 }
 
@@ -225,7 +225,7 @@ SQLRows::~SQLRows() {
     delete[] bind_;
 }
 
-const std::vector<std::string> &SQLRows::columns() const { return columns_; }
+const std::vector<std::string> &SQLRows::Columns() const { return columns_; }
 
 Statement::Statement(Connection *conn, const std::string &query)
     : conn_(conn),
@@ -235,11 +235,11 @@ Statement::Statement(Connection *conn, const std::string &query)
       bind_size_(0) {
     stmt_ = mysql_stmt_init(&conn_->mysql_);
     if (stmt_ == nullptr) {
-        throw exception_from_mysql(&conn_->mysql_);
+        throw ExceptionFromMySQL(&conn_->mysql_);
     }
     int ret = mysql_stmt_prepare(stmt_, query_.c_str(), -1);
     if (ret != 0) {
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
 }
 
@@ -258,11 +258,11 @@ Statement::~Statement() {
     }
 }
 
-std::size_t Statement::num_input() {
+std::size_t Statement::NumInput() {
     return (std::size_t)mysql_stmt_param_count(stmt_);
 }
 
-MYSQL_TIME *std_tm_to_mysql_tm(const std::tm &tm) {
+MYSQL_TIME *StdTmToMySQLTm(const std::tm &tm) {
     MYSQL_TIME *mysql_tm = new MYSQL_TIME;
     memset(mysql_tm, 0, sizeof(MYSQL_TIME));
 
@@ -276,7 +276,7 @@ MYSQL_TIME *std_tm_to_mysql_tm(const std::tm &tm) {
     return mysql_tm;
 }
 
-static void bind_value(const Value &value, MYSQL_BIND *bind) {
+static void BindValue(const Value &value, MYSQL_BIND *bind) {
     std::visit(
         [&bind](auto &&arg) {
             using T = std::decay_t<decltype(arg)>;
@@ -299,7 +299,7 @@ static void bind_value(const Value &value, MYSQL_BIND *bind) {
                 bind->buffer_length = arg.size();
             } else if constexpr (std::is_same_v<T, std::tm>) {
                 bind->buffer_type = MYSQL_TYPE_DATETIME;
-                bind->buffer = (void *)std_tm_to_mysql_tm(arg);
+                bind->buffer = (void *)StdTmToMySQLTm(arg);
                 bind->buffer_length = sizeof(MYSQL_TIME);
             } else if constexpr (std::is_same_v<T, NullInt64>) {
                 bind->buffer_type = MYSQL_TYPE_LONGLONG;
@@ -325,7 +325,7 @@ static void bind_value(const Value &value, MYSQL_BIND *bind) {
             } else if constexpr (std::is_same_v<T, NullTm>) {
                 bind->buffer_type = MYSQL_TYPE_DATETIME;
                 bind->is_null_value = (arg == nullptr);
-                bind->buffer = (void *)std_tm_to_mysql_tm(*arg);
+                bind->buffer = (void *)StdTmToMySQLTm(*arg);
                 bind->buffer_length = sizeof(MYSQL_TIME);
             } else
                 static_assert(always_false_v<T>, "non-exhaustive visitor!");
@@ -335,47 +335,47 @@ static void bind_value(const Value &value, MYSQL_BIND *bind) {
 
 static void bind_args(const std::vector<Value> &args, MYSQL_BIND *bind) {
     for (int i = 0; i < args.size(); i++) {
-        bind_value(args[i], &bind[i]);
+        BindValue(args[i], &bind[i]);
     }
 }
 
-Result Statement::exec(const std::vector<Value> &args) {
-    assert(args.size() == num_input());
+Result Statement::Exec(const std::vector<Value> &args) {
+    assert(args.size() == NumInput());
     if (args.size()) {
-        bind_value(args);
+        BindValue(args);
     }
 
     int ret = mysql_stmt_execute(stmt_);
     if (ret != 0) {
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
     int64_t last_insert_id = mysql_stmt_insert_id(stmt_);
     int64_t rows_affected = mysql_stmt_affected_rows(stmt_);
     return std::make_shared<SQLResult>(last_insert_id, rows_affected);
 }
 
-void Statement::bind_value(const std::vector<Value> &args) {
+void Statement::BindValue(const std::vector<Value> &args) {
     assert(args.size());
-    bind_ = new MYSQL_BIND[num_input()];
-    memset(bind_, 0, sizeof(MYSQL_BIND) * num_input());
-    bind_size_ = num_input();
+    bind_ = new MYSQL_BIND[NumInput()];
+    memset(bind_, 0, sizeof(MYSQL_BIND) * NumInput());
+    bind_size_ = NumInput();
 
     bind_args(args, bind_);
     int ret = mysql_stmt_bind_param(stmt_, bind_);
     if (ret != 0) {
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
 }
 
-Rows Statement::query(const std::vector<Value> &args) {
-    assert(args.size() == num_input());
+Rows Statement::Query(const std::vector<Value> &args) {
+    assert(args.size() == NumInput());
     if (args.size()) {
-        bind_value(args);
+        BindValue(args);
     }
 
     int ret = mysql_stmt_execute(stmt_);
     if (ret != 0) {
-        throw exception_from_stmt(stmt_);
+        throw ExceptionFromStmt(stmt_);
     }
 
     return std::make_shared<SQLRows>(stmt_);

@@ -25,7 +25,7 @@ std::ostream& operator<<(std::ostream& os, const Config& cfg) {
     return os;
 }
 
-static void parse_userinfo(Config* cfg, const std::string& userinfo) {
+static void ParseUserinfo(Config* cfg, const std::string& userinfo) {
     std::size_t colon_pos = userinfo.find(':');
     if (colon_pos == userinfo.npos) {
         cfg->user = userinfo;
@@ -35,7 +35,7 @@ static void parse_userinfo(Config* cfg, const std::string& userinfo) {
     }
 }
 
-static void parse_tcp_address(Config* cfg, const std::string& address) {
+static void ParseTCPAddress(Config* cfg, const std::string& address) {
     std::size_t colon_pos = address.find(':');
     if (colon_pos == address.npos) {
         cfg->host = address;
@@ -45,11 +45,11 @@ static void parse_tcp_address(Config* cfg, const std::string& address) {
     cfg->port = std::stol(address.substr(colon_pos + 1));
 }
 
-static void parse_protocol_address(Config* cfg,
+static void ParseProtocolAddress(Config* cfg,
                                    const std::string& protocol_addr) {
     std::size_t left_bracket_pos = protocol_addr.find('(');
     if (left_bracket_pos == protocol_addr.npos) {
-        return parse_tcp_address(cfg, protocol_addr);
+        return ParseTCPAddress(cfg, protocol_addr);
     }
     std::string protocol = protocol_addr.substr(0, left_bracket_pos);
     if (protocol != "tcp") {
@@ -60,15 +60,15 @@ static void parse_protocol_address(Config* cfg,
         throw std::invalid_argument("invalid address");
     }
     std::size_t count = right_bracket_pos - left_bracket_pos - 1;
-    return parse_protocol_address(
+    return ParseTCPAddress(
         cfg, protocol_addr.substr(left_bracket_pos + 1, count));
 }
 
-static void parse_dbname(Config* cfg, const std::string& dbname) {
+static void ParseDBName(Config* cfg, const std::string& dbname) {
     cfg->dbname = dbname;
 }
 
-static void parse_kv_param(Config* cfg, const std::string& kv_param) {
+static void ParseKVParam(Config* cfg, const std::string& kv_param) {
     std::size_t equal_pos = kv_param.find('=');
     std::string k;
     std::string v;
@@ -93,43 +93,43 @@ static void parse_kv_param(Config* cfg, const std::string& kv_param) {
     }
 }
 
-static void parse_param(Config* cfg, const std::string& paramstr) {
+static void ParseParam(Config* cfg, const std::string& paramstr) {
     std::size_t and_pos = paramstr.npos;
     std::string unresolved = paramstr;
     do {
         and_pos = unresolved.find('&');
-        parse_kv_param(cfg, unresolved.substr(0, and_pos));
+        ParseKVParam(cfg, unresolved.substr(0, and_pos));
         unresolved = unresolved.substr(and_pos + 1);
     } while (and_pos != unresolved.npos);
 }
 
-Config parse_dsn(const std::string& dsn) {
+Config ParseDSN(const std::string& dsn) {
     Config cfg;
     std::string unresolved(dsn);
 
     // parse userinfo
     std::size_t at_pos = unresolved.find('@');
     if (at_pos != dsn.npos) {
-        parse_userinfo(&cfg, unresolved.substr(0, at_pos));
+        ParseUserinfo(&cfg, unresolved.substr(0, at_pos));
     }
     unresolved = unresolved.substr(at_pos + 1);
 
     // parse protocol and address
     std::size_t slash_pos = unresolved.find('/');
     if (slash_pos == unresolved.npos) {
-        parse_protocol_address(&cfg, unresolved);
+        ParseProtocolAddress(&cfg, unresolved);
         return cfg;
     }
-    parse_protocol_address(&cfg, unresolved.substr(0, slash_pos));
+    ParseProtocolAddress(&cfg, unresolved.substr(0, slash_pos));
     unresolved = unresolved.substr(slash_pos + 1);
 
     std::size_t question_mark_pos = unresolved.find('?');
     if (question_mark_pos == unresolved.npos) {
-        parse_dbname(&cfg, unresolved);
+        ParseDBName(&cfg, unresolved);
         return cfg;
     }
-    parse_dbname(&cfg, unresolved.substr(0, question_mark_pos));
-    parse_param(&cfg, unresolved.substr(question_mark_pos + 1));
+    ParseDBName(&cfg, unresolved.substr(0, question_mark_pos));
+    ParseParam(&cfg, unresolved.substr(question_mark_pos + 1));
     return cfg;
 }
 

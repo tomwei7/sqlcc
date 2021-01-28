@@ -13,10 +13,10 @@ class Connection : public driver::Connection {
 public:
     Connection(const Config& cfg);
     ~Connection();
-    Stmt prepare(const std::string& query) override;
-    Tx begin() override;
-    void enter_thread() override;
-    void leave_thread() override;
+    Stmt Prepare(const std::string& query) override;
+    Tx Begin() override;
+    void EnterThread() override;
+    void LeaveThread() override;
 private:
     friend class Statement;
     Config cfg_;

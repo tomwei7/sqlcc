@@ -12,11 +12,11 @@ class Statement : public driver::Statement {
 public:
     Statement(Connection* conn, const std::string& query);
     ~Statement();
-    std::size_t num_input() override;
-    Result exec(const std::vector<Value>& args) override;
-    Rows query(const std::vector<Value>& args) override;
+    std::size_t NumInput() override;
+    Result Exec(const std::vector<Value>& args) override;
+    Rows Query(const std::vector<Value>& args) override;
 private:
-    void bind_value(const std::vector<Value>& args);
+    void BindValue(const std::vector<Value>& args);
     Connection* conn_;
     std::string query_;
     MYSQL_STMT* stmt_;
