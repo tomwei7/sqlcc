@@ -11,12 +11,12 @@ class StatementImpl;
 
 class ResultImpl: public SQLResult {
 public:
-    ResultImpl(driver::Result result): result_(result) {}
+    ResultImpl(std::shared_ptr<driver::SQLResult> result): result_(result) {}
     ~ResultImpl() {}
     int64_t LastInsertID() override;
     int64_t RowsAffected() override;
 private:
-    driver::Result result_;
+    std::shared_ptr<driver::SQLResult> result_;
 };
 
 int64_t ResultImpl::LastInsertID() {
@@ -38,7 +38,7 @@ public:
     void DoScan(std::vector<driver::Value> &dest) override;
    private:
     std::shared_ptr<StatementImpl> stmt_;
-    driver::Rows driver_rows_;
+    std::shared_ptr<driver::SQLRows> driver_rows_;
 };
 
 class StatementImpl: public Statement, public std::enable_shared_from_this<StatementImpl> {
@@ -52,12 +52,12 @@ private:
     friend class RowsImpl;
     friend class DatabaseImpl;
     std::shared_ptr<ConnectionImpl> conn_;
-    driver::Stmt dirver_stmt_;
+    std::shared_ptr<driver::Stmt> dirver_stmt_;
 };
 
 class ConnectionImpl: public Connection, public std::enable_shared_from_this<ConnectionImpl> {
 public:
-    ConnectionImpl(driver::Conn conn): driver_conn_(conn) {}
+    ConnectionImpl(std::shared_ptr<driver::Conn> conn): driver_conn_(conn) {}
     ~ConnectionImpl() {}
     Stmt Prepare(const std::string& query) override;
 protected:
@@ -65,7 +65,7 @@ protected:
 private:
     friend class StatementImpl;
     friend class DatabaseImpl;
-    driver::Conn driver_conn_;
+    std::shared_ptr<driver::Conn> driver_conn_;
 };
 
 Stmt ConnectionImpl::Prepare(const std::string& query) {
@@ -81,7 +81,7 @@ StatementImpl::StatementImpl(std::shared_ptr<ConnectionImpl> conn, const std::st
 }
 
 Result StatementImpl::DoExec(const std::vector<driver::Value>& args) {
-    driver::Result result = dirver_stmt_->Exec(args);
+    std::shared_ptr<driver::SQLResult> result = dirver_stmt_->Exec(args);
     return std::make_shared<ResultImpl>(result);
 }
 
@@ -129,7 +129,7 @@ std::shared_ptr<Connection> DatabaseImpl::Conn() {
 }
 
 std::shared_ptr<ConnectionImpl> DatabaseImpl::GetConn() {
-    driver::Conn conn = driver_->Open(dsn_);
+    std::shared_ptr<driver::Conn> conn = driver_->Open(dsn_);
     return std::make_shared<ConnectionImpl>(conn);
 }
 

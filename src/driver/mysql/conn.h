@@ -9,16 +9,16 @@ namespace sqlcc {
 namespace driver {
 namespace mysql {
 
-class Connection : public driver::Connection {
+class MySQLConn : public driver::Conn {
 public:
-    Connection(const Config& cfg);
-    ~Connection();
-    Stmt Prepare(const std::string& query) override;
-    Tx Begin() override;
+    MySQLConn(const Config& cfg);
+    ~MySQLConn();
+    std::shared_ptr<driver::Stmt> Prepare(const std::string& query) override;
+    std::shared_ptr<driver::Tx> Begin() override;
     void EnterThread() override;
     void LeaveThread() override;
 private:
-    friend class Statement;
+    friend class MySQLStmt;
     Config cfg_;
     MYSQL mysql_;
 };

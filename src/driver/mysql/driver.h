@@ -8,10 +8,10 @@ namespace sqlcc {
 namespace driver {
 namespace mysql {
 
-class Driver : public driver::Driver {
+class MySQLDriver : public driver::Driver {
 public:
-    Driver();
-    driver::Conn Open(const std::string& name) override;
+    MySQLDriver();
+    std::shared_ptr<driver::Conn> Open(const std::string& name) override;
 };
 
 } // namespace mysql

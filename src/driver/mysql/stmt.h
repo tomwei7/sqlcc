@@ -8,16 +8,16 @@ namespace sqlcc {
 namespace driver {
 namespace mysql {
 
-class Statement : public driver::Statement {
+class MySQLStmt : public driver::Stmt {
 public:
-    Statement(Connection* conn, const std::string& query);
-    ~Statement();
+    MySQLStmt(MySQLConn* conn, const std::string& query);
+    ~MySQLStmt();
     std::size_t NumInput() override;
-    Result Exec(const std::vector<Value>& args) override;
-    Rows Query(const std::vector<Value>& args) override;
+    std::shared_ptr<driver::SQLResult> Exec(const std::vector<Value>& args) override;
+    std::shared_ptr<driver::SQLRows> Query(const std::vector<Value>& args) override;
 private:
     void BindValue(const std::vector<Value>& args);
-    Connection* conn_;
+    MySQLConn* conn_;
     std::string query_;
     MYSQL_STMT* stmt_;
     MYSQL_BIND* bind_;

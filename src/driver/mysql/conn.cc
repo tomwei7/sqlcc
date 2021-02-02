@@ -29,7 +29,7 @@ static void SetMySQLOptions(const Config& cfg, MYSQL* mysql) {
     }
 }
 
-Connection::Connection(const Config& cfg): cfg_(cfg) {
+MySQLConn::MySQLConn(const Config& cfg): cfg_(cfg) {
     mysql_init(&mysql_);
     SetMySQLOptions(cfg_, &mysql_);
 
@@ -47,23 +47,23 @@ Connection::Connection(const Config& cfg): cfg_(cfg) {
     }
 }
 
-Stmt Connection::Prepare(const std::string& query) {
-    return std::make_shared<Statement>(this, query);
+std::shared_ptr<driver::Stmt> MySQLConn::Prepare(const std::string& query) {
+    return std::make_shared<MySQLStmt>(this, query);
 }
 
-Tx Connection::Begin() {
+std::shared_ptr<Tx> MySQLConn::Begin() {
     return nullptr;
 }
 
-void Connection::EnterThread() {
+void MySQLConn::EnterThread() {
     mysql_thread_init();
 }
 
-void Connection::LeaveThread() {
+void MySQLConn::LeaveThread() {
     mysql_thread_end();
 }
 
-Connection::~Connection() {
+MySQLConn::~MySQLConn() {
     mysql_close(&mysql_);
 }
 

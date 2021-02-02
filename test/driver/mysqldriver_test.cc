@@ -47,7 +47,7 @@ TEST(DSN, ToString) {
 
 class MySQLDriverTest: public testing::Test {
 protected:
-    Driver driver;
+    MySQLDriver driver;
 };
 
 TEST_F(MySQLDriverTest, Exec) {
@@ -59,9 +59,9 @@ TEST_F(MySQLDriverTest, Exec) {
 }
 
 TEST_F(MySQLDriverTest, Query) {
-    Conn conn = driver.Open("root:toor@tcp(127.0.0.1:3306)/testdb");
-    Stmt stmt = conn->Prepare("select * from table1");
-    Rows rows = stmt->Query({});
+    auto conn = driver.Open("root:toor@tcp(127.0.0.1:3306)/testdb");
+    auto stmt = conn->Prepare("select * from table1");
+    auto rows = stmt->Query({});
     std::vector<std::string> columns = rows->Columns();
     while(rows->Next()) {
         int64_t id;

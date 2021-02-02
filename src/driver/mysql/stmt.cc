@@ -3,8 +3,8 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 #include "driver/mysql/exception.h"
 #include "sqlcc/exception.h"
@@ -90,7 +90,7 @@ static Value NullValueFromBind(MYSQL_BIND *bind) {
     }
 }
 
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t &dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to int64_t");
     }
@@ -99,7 +99,7 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, int64_t& dest) {
     }
     dest = *(int64_t *)(bind->buffer);
 }
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t &dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to uint64_t");
     }
@@ -108,7 +108,7 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, uint64_t& dest) {
     }
     dest = *(uint64_t *)(bind->buffer);
 }
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, double& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, double &dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to double");
     }
@@ -117,7 +117,7 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, double& dest) {
     }
     dest = *(double *)(bind->buffer);
 }
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string &dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to string");
     }
@@ -127,7 +127,7 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::string& dest) {
     dest = std::string((char *)bind->buffer, *(bind->length));
 }
 
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm& dest) {
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm &dest) {
     if (*bind->is_null) {
         throw Exception(400, "can't bind null to tm");
     }
@@ -142,8 +142,8 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, std::tm& dest) {
     ss >> std::get_time(&dest, "%Y-%m-%d %T");
 }
 
-template<typename T>
-static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, T& dest) {
+template <typename T>
+static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, T &dest) {
     bool is_null = *(bind->is_null);
     if (is_null) {
         dest = T();
@@ -153,9 +153,8 @@ static void BindTo(MYSQL_FIELD *field, MYSQL_BIND *bind, T& dest) {
 }
 
 static void BindToValue(MYSQL_FIELD *field, MYSQL_BIND *bind, Value &value) {
-    std::visit( [&field, &bind](auto &&value) {
-        BindTo(field, bind, value);
-    }, value);
+    std::visit([&field, &bind](auto &&value) { BindTo(field, bind, value); },
+               value);
     bool is_null = *bind->is_null;
     if (is_null) {
         value = NullValueFromBind(bind);
@@ -227,7 +226,7 @@ SQLRows::~SQLRows() {
 
 const std::vector<std::string> &SQLRows::Columns() const { return columns_; }
 
-Statement::Statement(Connection *conn, const std::string &query)
+MySQLStmt::MySQLStmt(MySQLConn *conn, const std::string &query)
     : conn_(conn),
       query_(query),
       stmt_(nullptr),
@@ -243,7 +242,7 @@ Statement::Statement(Connection *conn, const std::string &query)
     }
 }
 
-Statement::~Statement() {
+MySQLStmt::~MySQLStmt() {
     mysql_stmt_close(stmt_);
     if (bind_ != nullptr) {
         for (std::size_t i = 0; i < bind_size_; i++) {
@@ -258,7 +257,7 @@ Statement::~Statement() {
     }
 }
 
-std::size_t Statement::NumInput() {
+std::size_t MySQLStmt::NumInput() {
     return (std::size_t)mysql_stmt_param_count(stmt_);
 }
 
@@ -339,7 +338,8 @@ static void bind_args(const std::vector<Value> &args, MYSQL_BIND *bind) {
     }
 }
 
-Result Statement::Exec(const std::vector<Value> &args) {
+std::shared_ptr<driver::SQLResult> MySQLStmt::Exec(
+    const std::vector<Value> &args) {
     assert(args.size() == NumInput());
     if (args.size()) {
         BindValue(args);
@@ -354,7 +354,7 @@ Result Statement::Exec(const std::vector<Value> &args) {
     return std::make_shared<SQLResult>(last_insert_id, rows_affected);
 }
 
-void Statement::BindValue(const std::vector<Value> &args) {
+void MySQLStmt::BindValue(const std::vector<Value> &args) {
     assert(args.size());
     bind_ = new MYSQL_BIND[NumInput()];
     memset(bind_, 0, sizeof(MYSQL_BIND) * NumInput());
@@ -367,7 +367,8 @@ void Statement::BindValue(const std::vector<Value> &args) {
     }
 }
 
-Rows Statement::Query(const std::vector<Value> &args) {
+std::shared_ptr<driver::SQLRows> MySQLStmt::Query(
+    const std::vector<Value> &args) {
     assert(args.size() == NumInput());
     if (args.size()) {
         BindValue(args);

@@ -10,12 +10,6 @@
 namespace sqlcc {
 namespace driver {
 
-class Connection;
-class Statement;
-class Transaction;
-class SQLResult;
-class SQLRows;
-
 template <class>
 inline constexpr bool always_false_v = false;
 
@@ -62,12 +56,6 @@ using NullTm = NullValue<std::tm>;
 
 using Value = std::variant<int64_t, uint64_t, double, std::string, std::tm, NullInt64, NullUInt64, NullDouble, NullString, NullTm>;
 
-using Conn = std::shared_ptr<Connection>;
-using Stmt = std::shared_ptr<Statement>;
-using Tx = std::shared_ptr<Transaction>;
-using Result = std::shared_ptr<SQLResult>;
-using Rows = std::shared_ptr<SQLRows>;
-
 class SQLResult {
    public:
     virtual ~SQLResult(){};
@@ -83,24 +71,24 @@ class SQLRows {
     virtual void Scan(std::vector<Value> &dest) = 0;
 };
 
-class Statement {
+class Stmt {
    public:
-    virtual ~Statement(){};
+    virtual ~Stmt(){};
     virtual std::size_t NumInput() = 0;
-    virtual Result Exec(const std::vector<Value> &args) = 0;
-    virtual Rows Query(const std::vector<Value> &args) = 0;
+    virtual std::shared_ptr<SQLResult> Exec(const std::vector<Value> &args) = 0;
+    virtual std::shared_ptr<SQLRows> Query(const std::vector<Value> &args) = 0;
 };
 
-class Transaction {
+class Tx {
    public:
     virtual void Commit() = 0;
     virtual void Rollback() = 0;
 };
 
-class Connection {
+class Conn {
    public:
-    virtual Stmt Prepare(const std::string &query) = 0;
-    virtual Tx Begin() = 0;
+    virtual std::shared_ptr<Stmt> Prepare(const std::string &query) = 0;
+    virtual std::shared_ptr<Tx> Begin() = 0;
     virtual void EnterThread() = 0;
     virtual void LeaveThread() = 0;
 };
@@ -109,7 +97,7 @@ class Driver {
    public:
     Driver() = default;
     virtual ~Driver() = default;
-    virtual Conn Open(const std::string &name) = 0;
+    virtual std::shared_ptr<Conn> Open(const std::string &name) = 0;
 };
 
 void RegisterDriver(const std::string &name, std::shared_ptr<Driver> driver);

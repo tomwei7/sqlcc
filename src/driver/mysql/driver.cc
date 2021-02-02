@@ -7,15 +7,15 @@ namespace sqlcc {
 namespace driver {
 namespace mysql {
 
-Driver::Driver() {}
+MySQLDriver::MySQLDriver() {}
 
-driver::Conn Driver::Open(const std::string& dsn) {
+std::shared_ptr<driver::Conn> MySQLDriver::Open(const std::string& dsn) {
     Config cfg = ParseDSN(dsn);
-    return std::make_shared<Connection>(cfg);
+    return std::make_shared<MySQLConn>(cfg);
 }
 
-std::shared_ptr<Driver> CreateMySQLDriver() {
-    return std::make_shared<Driver>();
+std::shared_ptr<MySQLDriver> CreateMySQLDriver() {
+    return std::make_shared<MySQLDriver>();
 }
 
 } // namespace mysql
